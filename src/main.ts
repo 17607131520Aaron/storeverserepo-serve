@@ -33,6 +33,7 @@ async function bootstrap() {
   }
 
   const port = getPortFromConfig(config.get<string>('SERVICE_PORT'), 3000);
+  // const port = 3000;
 
   // 添加调试信息
   console.log('Environment variables:');
