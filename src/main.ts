@@ -13,6 +13,9 @@ function getEnvFromConfig(cfg: string | undefined): string {
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  
+  // Socket.IO 是 NestJS 的默认 WebSocket 适配器，无需额外配置
+  
   const config = app.get(ConfigService);
   const env = getEnvFromConfig(config.get<string>('NODE_ENV'));
 
