@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import AppModule from './app.module';
+import {AppModule} from './app.module';
 import { ConfigService } from '@nestjs/config';
 
 function getPortFromConfig(cfg: string | number | undefined, fallback = 3000): number {

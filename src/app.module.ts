@@ -33,10 +33,6 @@ import { LogWsModule } from './modules/log-ws/log-ws.module';
     UserModule,
     // RabbitMQAppModule, // RabbitMQ模块
     // AuthModule,
-    ConfigModule.forRoot({
-      isGlobal: true, // 使 ConfigModule 全局可用
-      envFilePath: '.env', // 明确指定 .env 文件路径
-    }),
     LogWsModule,
   ],
   controllers: [],
