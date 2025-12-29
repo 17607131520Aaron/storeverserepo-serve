@@ -9,6 +9,7 @@ import { APP_INTERCEPTOR, APP_FILTER, APP_GUARD } from '@nestjs/core';
 // import { JwtExpiryGuard } from '@/guards/jwt-exp.guard';
 import { UserModule } from '@/modules/user.modules';
 import { RedisModule } from '@/redis';
+import { RabbitMQAppModule } from '@/rabbitmq';
 import { databaseConfig } from '@/config/database.config';
 // import { RabbitMQAppModule } from '@/modules/rabbitmq.module';
 // import { AuthModule } from '@/auth/auth.module';
@@ -31,7 +32,7 @@ import { LogWsModule } from './modules/log-ws/log-ws.module';
     TypeOrmModule.forRoot(databaseConfig), // 全局配置数据库连接
     RedisModule, // Redis模块
     UserModule,
-    // RabbitMQAppModule, // RabbitMQ模块
+    RabbitMQAppModule, // RabbitMQ模块
     // AuthModule,
     LogWsModule,
   ],
