@@ -133,7 +133,7 @@ export class RedisController {
       return {
         success: false,
         message: 'Redis操作测试失败',
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
         timestamp: new Date().toISOString(),
       };
     }
@@ -169,7 +169,7 @@ export class RedisController {
         pattern,
         count: 0,
         keys: [],
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
         timestamp: new Date().toISOString(),
       };
     }
@@ -204,7 +204,7 @@ export class RedisController {
         message: '删除键失败',
         key,
         deleted: false,
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
         timestamp: new Date().toISOString(),
       };
     }
@@ -248,7 +248,7 @@ export class RedisController {
         success: false,
         memoryUsage: [],
         memoryInfo: {},
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
         timestamp: new Date().toISOString(),
       };
     }

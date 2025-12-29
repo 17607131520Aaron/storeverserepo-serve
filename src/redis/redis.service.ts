@@ -32,7 +32,7 @@ export class RedisServiceImpl implements IRedisService, OnModuleInit, OnModuleDe
       const connectionInfo = await this.getConnectionInfo();
       this.logger.log(`📊 连接状态: ${connectionInfo.status}`);
     } catch (error) {
-      this.logger.error('❌ Redis连接失败:', error.message);
+      this.logger.error('❌ Redis连接失败:', error instanceof Error ? error.message : String(error));
       this.isHealthy = false;
     }
   }
@@ -195,7 +195,7 @@ export class RedisServiceImpl implements IRedisService, OnModuleInit, OnModuleDe
         info: infoObj,
       };
     } catch (error) {
-      this.logger.error('获取连接信息失败:', error.message);
+      this.logger.error('获取连接信息失败:', error instanceof Error ? error.message : String(error));
       return {
         status: this.redisClient.status,
         host: redisConfig.host,
@@ -228,7 +228,7 @@ export class RedisServiceImpl implements IRedisService, OnModuleInit, OnModuleDe
 
       return stats;
     } catch (error) {
-      this.logger.error('获取统计信息失败:', error.message);
+      this.logger.error('获取统计信息失败:', error instanceof Error ? error.message : String(error));
       return {};
     }
   }
@@ -246,7 +246,7 @@ export class RedisServiceImpl implements IRedisService, OnModuleInit, OnModuleDe
     });
 
     this.redisClient.on('error', (error) => {
-      this.logger.error('❌ Redis连接错误:', error.message);
+      this.logger.error('❌ Redis连接错误:', error instanceof Error ? error.message : String(error));
       this.isHealthy = false;
     });
 
@@ -275,7 +275,7 @@ export class RedisServiceImpl implements IRedisService, OnModuleInit, OnModuleDe
         }
       } catch (error) {
         this.isHealthy = false;
-        this.logger.error('❌ Redis健康检查失败:', error.message);
+        this.logger.error('❌ Redis健康检查失败:', error instanceof Error ? error.message : String(error));
       }
     }, redisHealthConfig.checkInterval);
   }
