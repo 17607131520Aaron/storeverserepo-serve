@@ -25,7 +25,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     let message: string = APP_ERROR_CODES.UNKNOWN_ERROR.message; // 默认错误信息
 
     if (exception instanceof AppHttpException) {
-      // 如果是企业自定义异常
+      // 如果是自定义异常
       code = exception.getCode(); // 使用自定义的错误码
       status = exception.getStatus ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR; // 获取状态码
       message = exception.message ?? APP_ERROR_CODES.UNKNOWN_ERROR.message; // 使用异常信息或默认
