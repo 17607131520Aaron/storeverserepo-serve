@@ -4,14 +4,11 @@ import { ConfigModule } from '@nestjs/config';
 import { DtoTransformInterceptor } from './interceptors/dto-transform.interceptor';
 import { GlobalResponseWrapperInterceptor } from '@/interceptors/global-response.interceptor';
 import { HttpExceptionFilter } from '@/interceptors/http-exception.interceptor';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { APP_INTERCEPTOR, APP_FILTER, APP_GUARD } from '@nestjs/core';
-// import { JwtExpiryGuard } from '@/guards/jwt-exp.guard';
 import { UserModule } from '@/modules/user.modules';
 import { RedisModule } from '@/redis';
 import { RabbitMQAppModule } from '@/rabbitmq';
 import { databaseConfig } from '@/config/database.config';
-// import { RabbitMQAppModule } from '@/modules/rabbitmq.module';
 import { AuthModule } from '@/auth/auth.module';
 import { LogWsModule } from './modules/log-ws/log-ws.module';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';

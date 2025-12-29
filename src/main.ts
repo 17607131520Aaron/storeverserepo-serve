@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import {AppModule} from './app.module';
 import { ConfigService } from '@nestjs/config';
@@ -15,7 +16,16 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   
   // Socket.IO 是 NestJS 的默认 WebSocket 适配器，无需额外配置
-  
+
+  // 全局请求体验证：把字段校验从 services 挪到 DTO + 管道
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true, // 只保留在 DTO 上声明的字段
+      forbidNonWhitelisted: true, // 请求里多出来的字段直接报错
+      transform: true, // 自动把原始数据转换成 DTO 类型
+      transformOptions: { enableImplicitConversion: true },
+    }),
+  );
   const config = app.get(ConfigService);
   const env = getEnvFromConfig(config.get<string>('NODE_ENV'));
 
