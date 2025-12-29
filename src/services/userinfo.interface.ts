@@ -1,8 +1,9 @@
-import { UserInfoDto, UserInfoResponseDto, UserLoginResponseDto } from '@/dto/userinfo.dto';
+import type { UserInfoDto, UserInfoResponseDto, UserLoginResponseDto, UserRegisterDto } from '@/dto/userinfo.dto';
 
 export interface IUserInfoService {
-  getUserInfo(): Promise<UserInfoResponseDto>;
-  registerUser(): Promise<string>;
+  getUserInfo(userId: number): Promise<UserInfoResponseDto>;
+  registerUser(userRegisterDto: UserRegisterDto): Promise<string>;
   userLogin(userInfoDto: UserInfoDto): Promise<UserLoginResponseDto>;
+  logout(token: string): Promise<void>;
 }
 
