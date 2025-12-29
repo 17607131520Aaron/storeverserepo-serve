@@ -12,8 +12,9 @@ import { RedisModule } from '@/redis';
 import { RabbitMQAppModule } from '@/rabbitmq';
 import { databaseConfig } from '@/config/database.config';
 // import { RabbitMQAppModule } from '@/modules/rabbitmq.module';
-// import { AuthModule } from '@/auth/auth.module';
+import { AuthModule } from '@/auth/auth.module';
 import { LogWsModule } from './modules/log-ws/log-ws.module';
+import { JwtAuthGuard } from './auth/jwt-auth.guard';
 
 @Module({
   imports: [
@@ -33,7 +34,7 @@ import { LogWsModule } from './modules/log-ws/log-ws.module';
     RedisModule, // Redis模块
     UserModule,
     RabbitMQAppModule, // RabbitMQ模块
-    // AuthModule,
+    AuthModule,
     LogWsModule,
   ],
   controllers: [],
@@ -44,7 +45,7 @@ import { LogWsModule } from './modules/log-ws/log-ws.module';
     { provide: APP_FILTER, useClass: HttpExceptionFilter },
     { provide: 'DEFAULT_SUCCESS_CODE', useValue: 0 },
     { provide: 'DEFAULT_ERROR_CODE', useValue: 9000 },
-    // { provide: APP_GUARD, useClass: JwtExpiryGuard },
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
   ],
 })
 export class AppModule implements OnModuleInit {

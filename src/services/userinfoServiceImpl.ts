@@ -1,15 +1,18 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, UnauthorizedException, HttpException } from '@nestjs/common';
 import bcrypt from 'bcryptjs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { UserInfoResponseDto, UserInfoDto } from '@/dto/userinfo.dto';
+import { UserInfoResponseDto, UserInfoDto, UserLoginResponseDto } from '@/dto/userinfo.dto';
 import { User } from '@/entity/user.entity';
+import { AuthService } from '@/auth/auth.service';
+import { IUserInfoService } from './userinfo.interface';
 
 @Injectable()
-export class UserInfoServiceImpl {
+export class UserInfoServiceImpl implements IUserInfoService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private readonly authService: AuthService,
   ) {}
 
   public async getUserInfo(): Promise<UserInfoResponseDto> {
@@ -63,16 +66,28 @@ export class UserInfoServiceImpl {
     }
   }
 
-  public async userLogin(userInfoDto: UserInfoDto): Promise<string> {
+  public async userLogin(userInfoDto: UserInfoDto): Promise<UserLoginResponseDto> {
     try {
-      // 从数据库验证用户登录（哈希校验）
       const user = await this.userRepository.findOne({
         where: { username: userInfoDto.username, status: 1 },
       });
-      if (!user) return '用户名或密码错误';
+      if (!user) {
+        throw new UnauthorizedException('用户名或密码错误');
+      }
       const ok = await bcrypt.compare(userInfoDto.password, user.password);
-      return ok ? '登录成功' : '用户名或密码错误';
+      if (!ok) {
+        throw new UnauthorizedException('用户名或密码错误');
+      }
+
+      const { token, expiresIn } = await this.authService.signUser({
+        sub: user.id,
+        username: user.username,
+      });
+      return { token, expiresIn };
     } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
       throw new BadRequestException('登录失败: ' + (error as Error).message);
     }
   }

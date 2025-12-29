@@ -20,4 +20,9 @@ export const envConfig = {
     password: process.env.REDIS_PASSWORD,
     db: parseInt(process.env.REDIS_DB || '0'),
   },
+  // JWT 配置
+  jwt: {
+    secret: process.env.JWT_SECRET || 'dev-secret',
+    ttlSeconds: parseInt(process.env.JWT_TTL_SECONDS || '7200'),
+  },
 };

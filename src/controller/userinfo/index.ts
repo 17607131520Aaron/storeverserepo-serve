@@ -1,10 +1,12 @@
 import { Controller, Get, Post, Inject, Body } from '@nestjs/common';
-import type { UserInfoServiceImpl } from '@/services/userinfoServiceImpl';
-import { UserInfoResponseDto, UserInfoDto } from '@/dto/userinfo.dto';
+import type { IUserInfoService } from '@/services/userinfo.interface';
+import { UserInfoResponseDto, UserInfoDto, UserLoginResponseDto } from '@/dto/userinfo.dto';
+import { Public } from '@/auth/public.decorator';
+import { useDto } from '@/decorators/use-dto.decorator';
 
 @Controller('userinfo')
 export class UserController {
-  constructor(@Inject('IUserInfoService') private readonly userinfoService: UserInfoServiceImpl) {}
+  constructor(@Inject('IUserInfoService') private readonly userinfoService: IUserInfoService) {}
 
   @Get('getUserInfo')
   public async getUserInfo(): Promise<UserInfoResponseDto> {
@@ -14,11 +16,14 @@ export class UserController {
 
   //用户登录接口
   @Post('userLogin')
-  public async userLogin(@Body() userInfoDto: UserInfoDto): Promise<string> {
+  @Public()
+  @useDto(UserLoginResponseDto)
+  public async userLogin(@Body() userInfoDto: UserInfoDto): Promise<UserLoginResponseDto> {
     return await this.userinfoService.userLogin(userInfoDto);
   }
 
   @Post('registerUser')
+  @Public()
   public async registerUser(): Promise<string> {
     return await this.userinfoService.registerUser();
   }

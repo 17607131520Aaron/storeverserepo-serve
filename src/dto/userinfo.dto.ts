@@ -19,3 +19,11 @@ export class UserInfoResponseDto {
   @Expose()
   public password: string;
 }
+
+export class UserLoginResponseDto {
+  @Expose()
+  public token: string;
+
+  @Expose()
+  public expiresIn: number;
+}
