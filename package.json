@@ -7,7 +7,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "build": "nest build",
-    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "format": "prettier --write \"src/**/*.{ts,js}\" \"test/**/*.{ts,js}\"",
     "start": "NODE_ENV=development nest start --watch",
     "start:test": "NODE_ENV=test nest start --watch",
     "start:production": "NODE_ENV=production nest start --watch",
