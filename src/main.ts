@@ -1,8 +1,10 @@
-import { NestFactory } from '@nestjs/core';
+/* eslint-disable no-console */
 import { ValidationPipe } from '@nestjs/common';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import {AppModule} from './app.module';
 import { ConfigService } from '@nestjs/config';
+import { NestFactory } from '@nestjs/core';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { apiReference } from '@scalar/nestjs-api-reference';
+import { AppModule } from './app.module';
 
 function getPortFromConfig(cfg: string | number | undefined, fallback = 3000): number {
   const v = Number(cfg);
@@ -14,8 +16,6 @@ function getEnvFromConfig(cfg: string | undefined): string {
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  
-  // Socket.IO 是 NestJS 的默认 WebSocket 适配器，无需额外配置
 
   // 全局请求体验证：把字段校验从 services 挪到 DTO + 管道
   app.useGlobalPipes(
@@ -28,6 +28,7 @@ async function bootstrap() {
   );
   const config = app.get(ConfigService);
   const env = getEnvFromConfig(config.get<string>('NODE_ENV'));
+  const port = getPortFromConfig(config.get<string>('SERVICE_PORT'), 3000);
 
   if (env !== 'production') {
     const swaggerConfig = new DocumentBuilder()
@@ -39,10 +40,34 @@ async function bootstrap() {
       .build();
 
     const document = SwaggerModule.createDocument(app, swaggerConfig);
-    SwaggerModule.setup('api', app, document);
-  }
 
-  const port = getPortFromConfig(config.get<string>('SERVICE_PORT'), 3000);
+    // Swagger UI - 保留原有 Swagger 文档界面
+    SwaggerModule.setup('api', app, document, {
+      jsonDocumentUrl: '/api-json', // 提供 OpenAPI JSON 文件
+      customSiteTitle: 'API 文档 - Swagger',
+    });
+
+    // Scalar UI - 现代化的 API 文档界面
+    app.use(
+      '/api-docs',
+      apiReference({
+        spec: {
+          content: document,
+        },
+        theme: 'default',
+        layout: 'modern',
+        defaultHttpClient: {
+          targetKey: 'javascript',
+          clientKey: 'axios',
+        },
+      }),
+    );
+
+    console.log(`📚 API 文档已启动：`);
+    console.log(`   Swagger UI: http://localhost:${port}/api`);
+    console.log(`   Scalar UI:  http://localhost:${port}/api-docs`);
+    console.log(`   OpenAPI JSON: http://localhost:${port}/api-json`);
+  }
   // const port = 3000;
 
   // 添加调试信息
