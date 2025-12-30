@@ -37,6 +37,32 @@ export class UserInfoServiceImpl implements IUserInfoService {
       if (error instanceof HttpException) {
         throw error;
       }
+      throw new BadRequestException(`获取用户信息失败: ${  (error as Error).message}`);
+    }
+  }
+
+  public async getUserInfoByUsername(username: string): Promise<UserInfoResponseDto> {
+    try {
+      // 从数据库通过用户名获取用户信息
+      const user = await this.userRepository.findOne({
+        where: { username, status: 1 },
+      });
+
+      if (!user) {
+        throw new BadRequestException('用户不存在');
+      }
+
+      // 只返回用户基本信息，不返回密码
+      return {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        phone: user.phone,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
       throw new BadRequestException('获取用户信息失败: ' + (error as Error).message);
     }
   }
@@ -122,7 +148,7 @@ export class UserInfoServiceImpl implements IUserInfoService {
       if (error instanceof HttpException) {
         throw error;
       }
-      throw new BadRequestException('登录失败: ' + (error as Error).message);
+      throw new BadRequestException(`登录失败: ${  (error as Error).message}`);
     }
   }
 }

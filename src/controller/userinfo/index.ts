@@ -2,7 +2,7 @@ import { Public } from '@/auth/public.decorator';
 import { useDto } from '@/decorators/use-dto.decorator';
 import { UserInfoDto, UserInfoResponseDto, UserLoginResponseDto, UserRegisterDto } from '@/dto/userinfo.dto';
 import type { IUserInfoService } from '@/services/userinfo.interface';
-import { Body, Controller, Get, Inject, Post, Request } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Post, Query, Request } from '@nestjs/common';
 import type { JwtPayload } from '@/auth/auth.service';
 
 @Controller('userinfo')
@@ -18,6 +18,15 @@ export class UserController {
     }
     // 返回原始对象，由全局 DTO 映射拦截器处理
     return this.userinfoService.getUserInfo(userId);
+  }
+
+  @Get('getUserInfoByUsername')
+  @Public()
+  public getUserInfoByUsername(@Query('username') username: string): Promise<UserInfoResponseDto> {
+    if (!username) {
+      throw new Error('用户名不能为空');
+    }
+    return this.userinfoService.getUserInfoByUsername(username);
   }
 
   //用户登录接口
