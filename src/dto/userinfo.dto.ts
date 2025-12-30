@@ -5,7 +5,7 @@ import { IsNotEmpty, IsString, IsEmail, IsOptional } from 'class-validator';
 export class UserInfoDto {
   @IsNotEmpty()
   @IsString()
-  public username: string; //用户名
+  public username: string; //账号
 
   @IsNotEmpty()
   @IsString()
@@ -16,14 +16,18 @@ export class UserInfoDto {
 export class UserRegisterDto {
   @IsNotEmpty()
   @IsString()
-  public username: string; //用户名
+  public username: string; //账号
+
+  @IsNotEmpty()
+  @IsString()
+  public realName: string; //用户名（真实姓名）
 
   @IsNotEmpty()
   @IsString()
   public password: string; //密码
 
   @IsOptional()
-  @IsEmail()
+  @IsEmail({}, { message: '邮箱格式不正确' })
   public email?: string; //邮箱（可选）
 
   @IsOptional()
@@ -37,6 +41,9 @@ export class UserInfoResponseDto {
 
   @Expose()
   public username: string;
+
+  @Expose()
+  public realName: string | null;
 
   @Expose()
   public email: string | null;

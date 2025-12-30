@@ -15,9 +15,17 @@ export class User {
     type: 'varchar',
     length: 50,
     unique: true,
-    comment: '用户名',
+    comment: '账号',
   })
   public username: string;
+
+  @Column({
+    type: 'varchar',
+    length: 50,
+    nullable: true,
+    comment: '用户名（真实姓名）',
+  })
+  public realName: string;
 
   @Column({
     type: 'varchar',

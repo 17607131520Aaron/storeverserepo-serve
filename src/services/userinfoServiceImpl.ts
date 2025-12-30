@@ -1,10 +1,21 @@
-import { Injectable, BadRequestException, UnauthorizedException, HttpException, ConflictException } from '@nestjs/common';
-import bcrypt from 'bcryptjs';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { UserInfoResponseDto, UserInfoDto, UserLoginResponseDto, UserRegisterDto } from '@/dto/userinfo.dto';
-import { User } from '@/entity/user.entity';
 import { AuthService } from '@/auth/auth.service';
+import {
+  UserInfoDto,
+  UserInfoResponseDto,
+  UserLoginResponseDto,
+  UserRegisterDto,
+} from '@/dto/userinfo.dto';
+import { User } from '@/entity/user.entity';
+import {
+  BadRequestException,
+  ConflictException,
+  HttpException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import bcrypt from 'bcryptjs';
+import { Repository } from 'typeorm';
 import { IUserInfoService } from './userinfo.interface';
 
 @Injectable()
@@ -30,6 +41,7 @@ export class UserInfoServiceImpl implements IUserInfoService {
       return {
         id: user.id,
         username: user.username,
+        realName: user.realName,
         email: user.email,
         phone: user.phone,
       };
@@ -37,7 +49,7 @@ export class UserInfoServiceImpl implements IUserInfoService {
       if (error instanceof HttpException) {
         throw error;
       }
-      throw new BadRequestException(`获取用户信息失败: ${  (error as Error).message}`);
+      throw new BadRequestException(`获取用户信息失败: ${(error as Error).message}`);
     }
   }
 
@@ -56,6 +68,7 @@ export class UserInfoServiceImpl implements IUserInfoService {
       return {
         id: user.id,
         username: user.username,
+        realName: user.realName,
         email: user.email,
         phone: user.phone,
       };
@@ -63,16 +76,16 @@ export class UserInfoServiceImpl implements IUserInfoService {
       if (error instanceof HttpException) {
         throw error;
       }
-      throw new BadRequestException('获取用户信息失败: ' + (error as Error).message);
+      throw new BadRequestException(`获取用户信息失败: ${(error as Error).message}`);
     }
   }
 
   public async registerUser(userRegisterDto: UserRegisterDto): Promise<string> {
     try {
-      // 验证用户名格式（3-20个字符，只能包含字母、数字、下划线）
+      // 验证账号格式（3-20个字符，只能包含字母、数字、下划线）
       const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
       if (!usernameRegex.test(userRegisterDto.username)) {
-        throw new BadRequestException('用户名格式不正确：3-20个字符，只能包含字母、数字、下划线');
+        throw new BadRequestException('账号格式不正确：3-20个字符，只能包含字母、数字、下划线');
       }
 
       // 验证密码强度（至少6个字符）
@@ -80,13 +93,13 @@ export class UserInfoServiceImpl implements IUserInfoService {
         throw new BadRequestException('密码长度至少6个字符');
       }
 
-      // 检查用户是否已存在
+      // 检查账号是否已存在
       const existingUser = await this.userRepository.findOne({
         where: { username: userRegisterDto.username },
       });
 
       if (existingUser) {
-        throw new ConflictException('用户名已存在');
+        throw new ConflictException('账号已存在');
       }
 
       // 如果提供了邮箱，检查邮箱是否已被使用
@@ -99,10 +112,21 @@ export class UserInfoServiceImpl implements IUserInfoService {
         }
       }
 
+      // 如果提供了手机号，检查手机号是否已被使用
+      if (userRegisterDto.phone) {
+        const existingPhone = await this.userRepository.findOne({
+          where: { phone: userRegisterDto.phone },
+        });
+        if (existingPhone) {
+          throw new ConflictException('手机号已被使用');
+        }
+      }
+
       // 创建新用户（使用哈希密码）
       const hashed = await bcrypt.hash(userRegisterDto.password, 10);
       const newUser = new User();
       newUser.username = userRegisterDto.username;
+      newUser.realName = userRegisterDto.realName;
       newUser.password = hashed;
       if (userRegisterDto.email) {
         newUser.email = userRegisterDto.email;
@@ -118,7 +142,21 @@ export class UserInfoServiceImpl implements IUserInfoService {
       if (error instanceof HttpException) {
         throw error;
       }
-      throw new BadRequestException('注册失败: ' + (error as Error).message);
+      // 处理数据库唯一性约束错误
+      const errorMessage = (error as Error).message;
+      if (errorMessage.includes('Duplicate entry') || errorMessage.includes('UNIQUE constraint')) {
+        if (errorMessage.includes('username')) {
+          throw new ConflictException('账号已存在');
+        }
+        if (errorMessage.includes('email')) {
+          throw new ConflictException('邮箱已被使用');
+        }
+        if (errorMessage.includes('phone')) {
+          throw new ConflictException('手机号已被使用');
+        }
+        throw new ConflictException('数据已存在，请检查账号、邮箱或手机号');
+      }
+      throw new BadRequestException(`注册失败: ${errorMessage}`);
     }
   }
 
@@ -148,7 +186,7 @@ export class UserInfoServiceImpl implements IUserInfoService {
       if (error instanceof HttpException) {
         throw error;
       }
-      throw new BadRequestException(`登录失败: ${  (error as Error).message}`);
+      throw new BadRequestException(`登录失败: ${(error as Error).message}`);
     }
   }
 }

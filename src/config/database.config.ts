@@ -6,8 +6,8 @@ export const databaseConfig: TypeOrmModuleOptions = {
   port: parseInt(process.env.MYSQL_PORT || '3306'),
   username: process.env.MYSQL_USERNAME || 'root',
   password: process.env.MYSQL_PASSWORD || '123456789',
-  database: process.env.MYSQL_DATABASE || 'alkaline-backend-test',
-  entities: [__dirname + '/../**/*.entity{.ts,.js}'],
+  database: process.env.MYSQL_DATABASE || 'allinone-backend-test',
+  entities: [`${__dirname  }/../**/*.entity{.ts,.js}`],
   synchronize: process.env.NODE_ENV !== 'production', // 非生产环境自动同步表结构
   logging: false, // 是否开启SQL日志输出，用于调试
   autoLoadEntities: true, // 自动加载实体
