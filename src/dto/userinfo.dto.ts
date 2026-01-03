@@ -12,6 +12,21 @@ export class UserInfoDto {
   public password: string; //密码
 }
 
+//微信登录请求参数
+export class WechatLoginDto {
+  @IsNotEmpty()
+  @IsString()
+  public code: string; //微信授权码
+
+  @IsOptional()
+  @IsString()
+  public nickName?: string; //微信昵称（可选）
+
+  @IsOptional()
+  @IsString()
+  public avatarUrl?: string; //微信头像URL（可选）
+}
+
 //注册请求参数
 export class UserRegisterDto {
   @IsNotEmpty()
@@ -50,6 +65,12 @@ export class UserInfoResponseDto {
 
   @Expose()
   public phone: string | null;
+
+  @Expose()
+  public wechatNickName: string | null;
+
+  @Expose()
+  public wechatAvatarUrl: string | null;
 }
 
 export class UserLoginResponseDto {
@@ -58,4 +79,13 @@ export class UserLoginResponseDto {
 
   @Expose()
   public expiresIn: number;
+}
+
+//微信用户信息响应参数
+export class WechatUserInfoResponseDto {
+  @Expose()
+  public wechatNickName: string | null;
+
+  @Expose()
+  public wechatAvatarUrl: string | null;
 }

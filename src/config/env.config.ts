@@ -25,4 +25,9 @@ export const envConfig = {
     secret: process.env.JWT_SECRET || 'dev-secret',
     ttlSeconds: parseInt(process.env.JWT_TTL_SECONDS || '7200'),
   },
+  // 微信配置
+  wechat: {
+    appId: process.env.WECHAT_APPID || '',
+    secret: process.env.WECHAT_SECRET || '',
+  },
 };

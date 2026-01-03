@@ -42,12 +42,31 @@ export class JwtAuthGuard implements CanActivate {
   }
 
   private extractToken(request: Request): string | null {
-    const authHeader = request.headers.authorization || request.headers.Authorization;
-    if (typeof authHeader !== 'string') {
+    // 优先使用小写的 authorization，如果不存在则使用大写的 Authorization
+    let authHeader = request.headers.authorization || request.headers.Authorization;
+    
+    // 如果 header 是数组，取第一个元素
+    if (Array.isArray(authHeader)) {
+      authHeader = authHeader[0];
+    }
+    
+    if (typeof authHeader !== 'string' || !authHeader) {
       return null;
     }
-    const [scheme, token] = authHeader.split(' ');
-    return scheme?.toLowerCase() === 'bearer' && token ? token : null;
+
+    // 处理多个 token 的情况（例如：Bearer token1, Bearer token2）
+    // 先按逗号分割，然后取第一个有效的 Bearer token
+    const parts = authHeader.split(',').map(part => part.trim());
+    
+    for (const part of parts) {
+      const [scheme, token] = part.split(' ');
+      if (scheme?.toLowerCase() === 'bearer' && token) {
+        // 移除 token 末尾可能存在的逗号
+        return token.replace(/,$/, '');
+      }
+    }
+    
+    return null;
   }
 
   private isSwaggerRequest(request: Request): boolean {

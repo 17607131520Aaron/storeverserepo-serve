@@ -51,6 +51,31 @@ export class User {
   public phone: string;
 
   @Column({
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+    unique: true,
+    comment: '微信openid',
+  })
+  public wechatOpenId: string;
+
+  @Column({
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+    comment: '微信昵称',
+  })
+  public wechatNickName: string;
+
+  @Column({
+    type: 'varchar',
+    length: 500,
+    nullable: true,
+    comment: '微信头像',
+  })
+  public wechatAvatarUrl: string;
+
+  @Column({
     type: 'tinyint',
     default: 1,
     comment: '状态：1-启用，0-禁用',

@@ -1,8 +1,8 @@
 import { Public } from '@/auth/public.decorator';
 import { useDto } from '@/decorators/use-dto.decorator';
-import { UserInfoDto, UserInfoResponseDto, UserLoginResponseDto, UserRegisterDto } from '@/dto/userinfo.dto';
+import { UserInfoDto, UserInfoResponseDto, UserLoginResponseDto, UserRegisterDto, WechatLoginDto, WechatUserInfoResponseDto } from '@/dto/userinfo.dto';
 import type { IUserInfoService } from '@/services/userinfo.interface';
-import { Body, Controller, Get, Inject, Post, Query, Request } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Inject, Post, Query, Request, UnauthorizedException } from '@nestjs/common';
 import type { JwtPayload } from '@/auth/auth.service';
 
 @Controller('userinfo')
@@ -14,7 +14,7 @@ export class UserController {
     // 从 JWT token 中获取当前用户ID
     const userId = req.user?.sub;
     if (!userId) {
-      throw new Error('无法获取用户信息：用户未认证');
+      throw new UnauthorizedException('无法获取用户信息：用户未认证');
     }
     // 返回原始对象，由全局 DTO 映射拦截器处理
     return this.userinfoService.getUserInfo(userId);
@@ -24,9 +24,22 @@ export class UserController {
   @Public()
   public getUserInfoByUsername(@Query('username') username: string): Promise<UserInfoResponseDto> {
     if (!username) {
-      throw new Error('用户名不能为空');
+      throw new BadRequestException('用户名不能为空');
     }
     return this.userinfoService.getUserInfoByUsername(username);
+  }
+
+  //微信用户信息接口
+  @Get('getWechatUserInfo')
+  @useDto(WechatUserInfoResponseDto)
+  public getWechatUserInfo(@Request() req: Request & { user?: JwtPayload }): Promise<WechatUserInfoResponseDto> {
+    // 从 JWT token 中获取当前用户ID
+    const userId = req.user?.sub;
+    if (!userId) {
+      throw new UnauthorizedException('无法获取微信用户信息：用户未认证');
+    }
+    // 返回原始对象，由全局 DTO 映射拦截器处理
+    return this.userinfoService.getWechatUserInfo(userId);
   }
 
   //用户登录接口
@@ -35,6 +48,14 @@ export class UserController {
   @useDto(UserLoginResponseDto)
   public userLogin(@Body() userInfoDto: UserInfoDto): Promise<UserLoginResponseDto> {
     return this.userinfoService.userLogin(userInfoDto);
+  }
+
+  //微信登录接口
+  @Post('wechatLogin')
+  @Public()
+  @useDto(UserLoginResponseDto)
+  public wechatLogin(@Body() wechatLoginDto: WechatLoginDto): Promise<UserLoginResponseDto> {
+    return this.userinfoService.wechatLogin(wechatLoginDto);
   }
 
   //用户注册接口

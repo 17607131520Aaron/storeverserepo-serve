@@ -59,6 +59,12 @@ JWT_SECRET=your-secret-key-change-in-production
 JWT_TTL_SECONDS=7200
 
 # ============================================
+# 微信小程序配置
+# ============================================
+WECHAT_APPID=your-wechat-appid
+WECHAT_SECRET=your-wechat-secret
+
+# ============================================
 # WebSocket 日志服务器配置
 # ============================================
 LOG_SERVER_PORT=8082

@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { Module, OnModuleInit } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
@@ -17,10 +18,10 @@ import { JwtAuthGuard } from './auth/jwt-auth.guard';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: [`.env.${process.env.NODE_ENV || 'development'}`, '.env'],
+      envFilePath: [`.env.${process.env.NODE_ENV ?? 'development'}`, '.env'],
       load: [
         () => {
-          const env = process.env.NODE_ENV || 'development';
+          const env = process.env.NODE_ENV ?? 'development';
           console.log(`[ConfigModule] Loading environment: ${env}`);
           console.log(`[ConfigModule] Looking for files: .env.${env}, .env`);
           return {};
@@ -42,7 +43,7 @@ import { JwtAuthGuard } from './auth/jwt-auth.guard';
     { provide: APP_FILTER, useClass: HttpExceptionFilter },
     { provide: 'DEFAULT_SUCCESS_CODE', useValue: 0 },
     { provide: 'DEFAULT_ERROR_CODE', useValue: 9000 },
-    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: JwtAuthGuard }, // 启用全局JWT认证守卫
   ],
 })
 export class AppModule implements OnModuleInit {
@@ -56,16 +57,16 @@ export class AppModule implements OnModuleInit {
 
     console.log('✅ Redis模块已加载！');
     console.log(
-      `🌐 Redis地址: ${process.env.REDIS_HOST || 'localhost'}:${process.env.REDIS_PORT || '6379'}`,
+      `🌐 Redis地址: ${process.env.REDIS_HOST ?? 'localhost'}:${process.env.REDIS_PORT ?? '6379'}`,
     );
-    console.log(`🗄️ Redis数据库: ${process.env.REDIS_DB || '0'}`);
+    console.log(`🗄️ Redis数据库: ${process.env.REDIS_DB ?? '0'}`);
     console.log('========================\n');
 
     console.log('✅ RabbitMQ模块已加载！');
     console.log(
-      `🌐 RabbitMQ地址: ${process.env.RABBITMQ_HOST || 'localhost'}:${process.env.RABBITMQ_PORT || '5672'}`,
+      `🌐 RabbitMQ地址: ${process.env.RABBITMQ_HOST ?? 'localhost'}:${process.env.RABBITMQ_PORT ?? '5672'}`,
     );
-    console.log(`👤 用户名: ${process.env.RABBITMQ_USERNAME || 'guest'}`);
+    console.log(`👤 用户名: ${process.env.RABBITMQ_USERNAME ?? 'guest'}`);
     console.log('========================\n');
   }
 }
