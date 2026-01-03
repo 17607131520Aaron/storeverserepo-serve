@@ -1,11 +1,14 @@
 import { AuthService } from '@/auth/auth.service';
 import {
+  DecryptPhoneNumberDto,
+  DecryptPhoneNumberResponseDto,
   GetWechatUserInfoByCodeDto,
   UserInfoDto,
   UserInfoResponseDto,
   UserLoginResponseDto,
   UserRegisterDto,
   WechatLoginDto,
+  WechatRegisterDto,
   WechatUserInfoByCodeResponseDto,
   WechatUserInfoResponseDto,
 } from '@/dto/userinfo.dto';
@@ -20,6 +23,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import bcrypt from 'bcryptjs';
+import { createDecipheriv } from 'crypto';
 import { Repository } from 'typeorm';
 import { IUserInfoService } from './userinfo.interface';
 
@@ -165,6 +169,66 @@ export class UserInfoServiceImpl implements IUserInfoService {
       }
       throw new BadRequestException(
         `获取微信用户信息失败: ${(error as Error).message}`,
+      );
+    }
+  }
+
+  /**
+   * 解密微信手机号
+   * 使用微信提供的加密数据、初始向量和session_key进行解密
+   */
+  public async decryptPhoneNumber(
+    dto: DecryptPhoneNumberDto,
+  ): Promise<DecryptPhoneNumberResponseDto> {
+    try {
+      const appId = this.configService.get<string>('WECHAT_APPID');
+      const secret = this.configService.get<string>('WECHAT_SECRET');
+
+      if (!appId || !secret) {
+        throw new BadRequestException('微信配置未设置，请联系管理员');
+      }
+
+      // 调用微信API获取session_key
+      const url = `https://api.weixin.qq.com/sns/jscode2session?appid=${appId}&secret=${secret}&js_code=${dto.code}&grant_type=authorization_code`;
+      const response = await fetch(url);
+      const data = (await response.json()) as WechatCode2SessionResponse;
+
+      if (data.errcode || !data.session_key) {
+        const errorMsg = data.errmsg ?? '获取session_key失败';
+        throw new UnauthorizedException(`获取session_key失败: ${errorMsg}`);
+      }
+
+      // 使用AES-128-CBC解密
+      const sessionKey = Buffer.from(data.session_key, 'base64');
+      const encryptedData = Buffer.from(dto.encryptedData, 'base64');
+      const iv = Buffer.from(dto.iv, 'base64');
+
+      // 创建解密器
+      const decipher = createDecipheriv('aes-128-cbc', sessionKey, iv);
+      decipher.setAutoPadding(true);
+
+      // 解密
+      let decrypted = decipher.update(encryptedData, undefined, 'utf8');
+      decrypted += decipher.final('utf8');
+
+      // 解析JSON
+      const decryptedData = JSON.parse(decrypted);
+
+      // 验证appid
+      if (decryptedData.watermark?.appid !== appId) {
+        throw new UnauthorizedException('解密数据appid不匹配');
+      }
+
+      // 返回手机号
+      return {
+        phoneNumber: decryptedData.phoneNumber,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new BadRequestException(
+        `解密手机号失败: ${(error as Error).message}`,
       );
     }
   }
@@ -394,6 +458,119 @@ export class UserInfoServiceImpl implements IUserInfoService {
         throw error;
       }
       throw new BadRequestException(`微信登录失败: ${(error as Error).message}`);
+    }
+  }
+
+  public async wechatRegister(wechatRegisterDto: WechatRegisterDto): Promise<UserLoginResponseDto> {
+    try {
+      // 记录接收到的参数
+      console.log('[微信注册] 接收到的参数:', {
+        code: wechatRegisterDto.code ? '已提供' : '未提供',
+        nickName: wechatRegisterDto.nickName || '未提供',
+        avatarUrl: wechatRegisterDto.avatarUrl || '未提供',
+        phone: wechatRegisterDto.phone || '未提供',
+        country: wechatRegisterDto.country || '未提供',
+        region: wechatRegisterDto.region || '未提供',
+        wechatNumber: wechatRegisterDto.wechatNumber || '未提供',
+      });
+
+      const appId = this.configService.get<string>('WECHAT_APPID');
+      const secret = this.configService.get<string>('WECHAT_SECRET');
+
+      if (!appId || !secret) {
+        throw new BadRequestException('微信配置未设置，请联系管理员');
+      }
+
+      // 调用微信API获取openid和session_key
+      const url = `https://api.weixin.qq.com/sns/jscode2session?appid=${appId}&secret=${secret}&js_code=${wechatRegisterDto.code}&grant_type=authorization_code`;
+      const response = await fetch(url);
+      const data = (await response.json()) as WechatCode2SessionResponse;
+
+      if (data.errcode || !data.openid) {
+        const errorMsg = data.errmsg ?? '微信注册失败';
+        throw new UnauthorizedException(`微信注册失败: ${errorMsg}`);
+      }
+
+      // 检查用户是否已存在
+      const existingUser = await this.userRepository.findOne({
+        where: { wechatOpenId: data.openid },
+      });
+
+      if (existingUser) {
+        throw new ConflictException('该微信账号已注册，请直接登录');
+      }
+
+      // 检查手机号是否已被使用
+      if (wechatRegisterDto.phone) {
+        const existingPhone = await this.userRepository.findOne({
+          where: { phone: wechatRegisterDto.phone },
+        });
+        if (existingPhone) {
+          throw new ConflictException('手机号已被使用');
+        }
+      }
+
+      // 生成一个唯一的username（使用wechat_前缀 + openid的一部分）
+      const usernamePrefix = 'wechat_';
+      const username = usernamePrefix + data.openid.substring(0, 16);
+
+      // 检查username是否已存在，如果存在则添加随机后缀
+      let finalUsername = username;
+      let counter = 1;
+      while (await this.userRepository.findOne({ where: { username: finalUsername } })) {
+        finalUsername = `${username}_${counter}`;
+        counter++;
+      }
+
+      // 创建新用户
+      const newUser = new User();
+      newUser.username = finalUsername;
+      newUser.wechatOpenId = data.openid;
+      newUser.status = 1;
+      // 微信注册用户需要设置一个随机密码（虽然不会用到，但数据库字段非空）
+      newUser.password = await bcrypt.hash(Math.random().toString(36).slice(-8), 10);
+      
+      // 保存微信用户信息
+      if (wechatRegisterDto.nickName) {
+        newUser.wechatNickName = wechatRegisterDto.nickName;
+      }
+      if (wechatRegisterDto.avatarUrl) {
+        newUser.wechatAvatarUrl = wechatRegisterDto.avatarUrl;
+      }
+      if (wechatRegisterDto.phone) {
+        newUser.phone = wechatRegisterDto.phone;
+      }
+      // 注意：country和region字段在User实体中不存在，如果需要可以添加到实体中
+      // 这里先保存到realName字段作为临时方案，或者可以扩展User实体
+      if (wechatRegisterDto.country || wechatRegisterDto.region) {
+        const locationInfo = [wechatRegisterDto.country, wechatRegisterDto.region].filter(Boolean).join(' ');
+        if (locationInfo) {
+          // 可以保存到realName或者扩展User实体添加新字段
+          // 这里暂时不保存，如果需要可以扩展User实体
+        }
+      }
+
+      await this.userRepository.save(newUser);
+      console.log('[微信注册] 新用户注册成功，用户信息:', {
+        id: newUser.id,
+        username: newUser.username,
+        wechatNickName: newUser.wechatNickName,
+        wechatAvatarUrl: newUser.wechatAvatarUrl,
+        phone: newUser.phone,
+      });
+
+      // 生成JWT token
+      const { token, expiresIn } = await this.authService.signUser({
+        sub: newUser.id,
+        username: newUser.username,
+      });
+
+      return { token, expiresIn };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new BadRequestException(`微信注册失败: ${(error as Error).message}`);
     }
   }
 }

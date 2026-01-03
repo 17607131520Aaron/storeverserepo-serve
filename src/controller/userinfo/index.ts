@@ -1,6 +1,6 @@
 import { Public } from '@/auth/public.decorator';
 import { useDto } from '@/decorators/use-dto.decorator';
-import { GetWechatUserInfoByCodeDto, UserInfoDto, UserInfoResponseDto, UserLoginResponseDto, UserRegisterDto, WechatLoginDto, WechatUserInfoByCodeResponseDto, WechatUserInfoResponseDto } from '@/dto/userinfo.dto';
+import { DecryptPhoneNumberDto, DecryptPhoneNumberResponseDto, GetWechatUserInfoByCodeDto, UserInfoDto, UserInfoResponseDto, UserLoginResponseDto, UserRegisterDto, WechatLoginDto, WechatRegisterDto, WechatUserInfoByCodeResponseDto, WechatUserInfoResponseDto } from '@/dto/userinfo.dto';
 import type { IUserInfoService } from '@/services/userinfo.interface';
 import { BadRequestException, Body, Controller, Get, Inject, Post, Query, Request, UnauthorizedException } from '@nestjs/common';
 import type { JwtPayload } from '@/auth/auth.service';
@@ -58,6 +58,14 @@ export class UserController {
     return this.userinfoService.getWechatUserInfoByCode(dto);
   }
 
+  //解密微信手机号接口
+  @Post('decryptPhoneNumber')
+  @Public()
+  @useDto(DecryptPhoneNumberResponseDto)
+  public decryptPhoneNumber(@Body() dto: DecryptPhoneNumberDto): Promise<DecryptPhoneNumberResponseDto> {
+    return this.userinfoService.decryptPhoneNumber(dto);
+  }
+
   //微信登录接口
   @Post('wechatLogin')
   @Public()
@@ -71,6 +79,14 @@ export class UserController {
   @Public()
   public registerUser(@Body() userRegisterDto: UserRegisterDto): Promise<string> {
     return this.userinfoService.registerUser(userRegisterDto);
+  }
+
+  //微信注册接口
+  @Post('wechatRegister')
+  @Public()
+  @useDto(UserLoginResponseDto)
+  public wechatRegister(@Body() wechatRegisterDto: WechatRegisterDto): Promise<UserLoginResponseDto> {
+    return this.userinfoService.wechatRegister(wechatRegisterDto);
   }
 
   //用户登出接口

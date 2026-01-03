@@ -27,6 +27,37 @@ export class WechatLoginDto {
   public avatarUrl?: string; //微信头像URL（可选）
 }
 
+//微信注册请求参数
+export class WechatRegisterDto {
+  @IsNotEmpty()
+  @IsString()
+  public code: string; //微信授权码
+
+  @IsNotEmpty()
+  @IsString()
+  public nickName: string; //微信昵称
+
+  @IsOptional()
+  @IsString()
+  public avatarUrl?: string; //微信头像URL（可选）
+
+  @IsNotEmpty()
+  @IsString()
+  public phone: string; //手机号
+
+  @IsOptional()
+  @IsString()
+  public country?: string; //国家（可选）
+
+  @IsOptional()
+  @IsString()
+  public region?: string; //地区（可选）
+
+  @IsOptional()
+  @IsString()
+  public wechatNumber?: string; //微信号（可选）
+}
+
 //注册请求参数
 export class UserRegisterDto {
   @IsNotEmpty()
@@ -110,4 +141,25 @@ export class WechatUserInfoByCodeResponseDto {
 
   @Expose()
   public exists: boolean; //用户是否已存在
+}
+
+//解密微信手机号请求参数
+export class DecryptPhoneNumberDto {
+  @IsNotEmpty()
+  @IsString()
+  public code: string; //微信授权码（用于获取session_key）
+
+  @IsNotEmpty()
+  @IsString()
+  public encryptedData: string; //加密数据
+
+  @IsNotEmpty()
+  @IsString()
+  public iv: string; //初始向量
+}
+
+//解密微信手机号响应参数
+export class DecryptPhoneNumberResponseDto {
+  @Expose()
+  public phoneNumber: string; //解密后的手机号
 }
