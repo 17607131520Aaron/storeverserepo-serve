@@ -89,3 +89,25 @@ export class WechatUserInfoResponseDto {
   @Expose()
   public wechatAvatarUrl: string | null;
 }
+
+//通过code获取微信用户信息请求参数
+export class GetWechatUserInfoByCodeDto {
+  @IsNotEmpty()
+  @IsString()
+  public code: string; //微信授权码
+}
+
+//通过code获取微信用户信息响应参数
+export class WechatUserInfoByCodeResponseDto {
+  @Expose()
+  public openid: string;
+
+  @Expose()
+  public wechatNickName: string | null;
+
+  @Expose()
+  public wechatAvatarUrl: string | null;
+
+  @Expose()
+  public exists: boolean; //用户是否已存在
+}

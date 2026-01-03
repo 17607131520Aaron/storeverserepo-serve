@@ -1,10 +1,12 @@
 import { AuthService } from '@/auth/auth.service';
 import {
+  GetWechatUserInfoByCodeDto,
   UserInfoDto,
   UserInfoResponseDto,
   UserLoginResponseDto,
   UserRegisterDto,
   WechatLoginDto,
+  WechatUserInfoByCodeResponseDto,
   WechatUserInfoResponseDto,
 } from '@/dto/userinfo.dto';
 import { User } from '@/entity/user.entity';
@@ -117,6 +119,53 @@ export class UserInfoServiceImpl implements IUserInfoService {
         throw error;
       }
       throw new BadRequestException(`获取微信用户信息失败: ${(error as Error).message}`);
+    }
+  }
+
+  /**
+   * 通过微信code获取用户信息（使用openid查询）
+   * 根据微信文档，需要通过code获取openid，然后查询数据库中已保存的用户信息
+   */
+  public async getWechatUserInfoByCode(
+    dto: GetWechatUserInfoByCodeDto,
+  ): Promise<WechatUserInfoByCodeResponseDto> {
+    try {
+      const appId = this.configService.get<string>('WECHAT_APPID');
+      const secret = this.configService.get<string>('WECHAT_SECRET');
+
+      if (!appId || !secret) {
+        throw new BadRequestException('微信配置未设置，请联系管理员');
+      }
+
+      // 调用微信API获取openid和session_key
+      const url = `https://api.weixin.qq.com/sns/jscode2session?appid=${appId}&secret=${secret}&js_code=${dto.code}&grant_type=authorization_code`;
+      const response = await fetch(url);
+      const data = (await response.json()) as WechatCode2SessionResponse;
+
+      if (data.errcode || !data.openid) {
+        const errorMsg = data.errmsg ?? '获取微信用户信息失败';
+        throw new UnauthorizedException(`获取微信用户信息失败: ${errorMsg}`);
+      }
+
+      // 根据openid查询数据库中已保存的用户信息
+      const user = await this.userRepository.findOne({
+        where: { wechatOpenId: data.openid, status: 1 },
+      });
+
+      // 返回用户信息（如果用户存在则返回已保存的信息，否则返回null）
+      return {
+        openid: data.openid,
+        wechatNickName: user?.wechatNickName || null,
+        wechatAvatarUrl: user?.wechatAvatarUrl || null,
+        exists: !!user,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new BadRequestException(
+        `获取微信用户信息失败: ${(error as Error).message}`,
+      );
     }
   }
 

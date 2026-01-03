@@ -1,6 +1,6 @@
 import { Public } from '@/auth/public.decorator';
 import { useDto } from '@/decorators/use-dto.decorator';
-import { UserInfoDto, UserInfoResponseDto, UserLoginResponseDto, UserRegisterDto, WechatLoginDto, WechatUserInfoResponseDto } from '@/dto/userinfo.dto';
+import { GetWechatUserInfoByCodeDto, UserInfoDto, UserInfoResponseDto, UserLoginResponseDto, UserRegisterDto, WechatLoginDto, WechatUserInfoByCodeResponseDto, WechatUserInfoResponseDto } from '@/dto/userinfo.dto';
 import type { IUserInfoService } from '@/services/userinfo.interface';
 import { BadRequestException, Body, Controller, Get, Inject, Post, Query, Request, UnauthorizedException } from '@nestjs/common';
 import type { JwtPayload } from '@/auth/auth.service';
@@ -48,6 +48,14 @@ export class UserController {
   @useDto(UserLoginResponseDto)
   public userLogin(@Body() userInfoDto: UserInfoDto): Promise<UserLoginResponseDto> {
     return this.userinfoService.userLogin(userInfoDto);
+  }
+
+  //通过code获取微信用户信息接口（使用openid查询）
+  @Post('getWechatUserInfoByCode')
+  @Public()
+  @useDto(WechatUserInfoByCodeResponseDto)
+  public getWechatUserInfoByCode(@Body() dto: GetWechatUserInfoByCodeDto): Promise<WechatUserInfoByCodeResponseDto> {
+    return this.userinfoService.getWechatUserInfoByCode(dto);
   }
 
   //微信登录接口
